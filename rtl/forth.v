@@ -141,6 +141,9 @@ assign o_ipsel   = instr[instr_width-2:instr_width-3];
 
 assign o_imm_pc  = instr[iaddr_width-1:0];
 
+
+   logic [instr_width-1:0] OP_NOP = 'he040;
+
 // | 15  | 14  | 13  | 12  | ...
 // | imm |   ipsel   | ret | ...
 // |  7  |  6  |   5   |   4  |   3   |   2  |  1  |  0  |
@@ -185,7 +188,7 @@ always @(posedge clk)
     IP <= IP_next;
 
 assign iaddr = IP_next;
-assign instr = need_wait ? 'he040 : idata;
+assign instr = need_wait ? OP_NOP : idata;
 
 // RSP ///////////////////////////////////////////
 
