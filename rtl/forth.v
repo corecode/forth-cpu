@@ -262,7 +262,7 @@ always @(*)
   `unique
     case (o_alu)
       O_ASHR: alu_out = {ain1[width-1],ain1[width-1:1]};
-      O_NOT: alu_out  = !ain1;
+      O_NOT: alu_out  = ~ain1;
       O_EQ0: alu_out  = TOS_is_zero ? -1 : 0;
       O_NEG: alu_out  = -ain1;
       O_AND: alu_out  = ain1 & ain2;
