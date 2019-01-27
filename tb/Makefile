@@ -8,8 +8,10 @@ test: $(addsuffix .vcd,${TB})
 
 .PRECIOUS: %.vvp
 
-%.vcd: %.vvp
+%.vcd: %.vvp .FORCE
 	vvp $^ -lxt2
+
+.FORCE:
 
 clean:
 	-rm -f $(addsuffix .vcd,${TB}) $(addsuffix .vvp,${TB})
