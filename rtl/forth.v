@@ -43,10 +43,10 @@ localparam stack_width = $clog2(stacksize);
    reg [width-1:0]          TOS_next;
 
    reg [width-1:0]          pstack[0:stacksize-1];
-   reg [width-1:0]          pstack_top;
+   wire [width-1:0]         pstack_top;
 
    reg [width-1:0]          rstack[0:stacksize-1];
-   reg [width-1:0]          rstack_top;
+   wire [width-1:0]         rstack_top;
 
 
 /*
@@ -201,11 +201,7 @@ always @(posedge clk)
   if (o_rsp_en && o_rsp_dir)
     rstack[RSP_next] <= rstack_next;
 
-always @(posedge clk)
-  if (o_rsp_en && o_rsp_dir)
-    rstack_top <= rstack_next;
-  else
-    rstack_top <= rstack[RSP_next];
+assign rstack_top = rstack[RSP];
 
 // PSP ///////////////////////////////////////////
 
@@ -230,11 +226,7 @@ always @(posedge clk)
   if (o_psp_en && o_psp_dir)
     pstack[PSP_next] <= TOS;
 
-always @(posedge clk)
-  if (o_psp_en && o_psp_dir)
-    pstack_top <= TOS;
-  else
-    pstack_top <= pstack[PSP_next];
+assign pstack_top = pstack[PSP];
 
 // ALU ///////////////////////////////////////////
 
