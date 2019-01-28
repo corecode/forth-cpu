@@ -151,20 +151,16 @@ always @(posedge clk)
 // instruction fetch /////////////////////////////
 
    wire [iaddr_width-1:0] IP_inc;
-assign IP_inc = IP + 1;
+assign IP_inc = need_wait ? IP : IP + 1;
 
 always @(*)
-  case (1'b1)
-    need_wait: IP_next = IP;
-    o_is_imm: IP_next     = IP_inc;
-    o_ret: IP_next     = rstack_top;
-    default:
-      case (o_ipsel)
-        `O_IP_IMM    : IP_next = o_imm_pc;
-        `O_IP_CONDIMM: IP_next = TOS_is_zero ? o_imm_pc : IP_inc;
-        `O_IP_INC    : IP_next = IP_inc;
-        `O_IP_TOS    : IP_next = TOS;
-      endcase
+  casex ({o_is_imm,o_ret,o_ipsel})
+    {2'b00,`O_IP_IMM}    : IP_next = o_imm_pc;
+    {2'b00,`O_IP_CONDIMM}: IP_next = TOS_is_zero ? o_imm_pc : IP_inc;
+    {2'b00,`O_IP_INC}    : IP_next = IP_inc;
+    {2'b00,`O_IP_TOS}    : IP_next = TOS;
+    {2'b01,2'b??}        : IP_next = rstack_top;
+    {2'b1?,2'b??}        : IP_next = IP_inc;
   endcase
 
 always @(posedge clk)
@@ -239,8 +235,8 @@ always @(*)
   case (o_alu)
     `O_ASHR: alu_out = {ain1[width-1],ain1[width-1:1]};
     `O_NOT: alu_out  = ~ain1;
-    `O_EQ0: alu_out  = TOS_is_zero ? -1 : 0;
-    `O_NEG: alu_out  = -ain1;
+    `O_EQ0: alu_out  = TOS_is_zero ? ~ain1 : 0;
+    `O_NEG: alu_out  = -ain1;   // binary would be smaller
     `O_AND: alu_out  = ain1 & ain2;
     `O_OR: alu_out   = ain1 | ain2;
     `O_XOR: alu_out  = ain1 ^ ain2;
