@@ -132,7 +132,7 @@ localparam stack_width = $clog2(stacksize);
 assign o_is_lit  = ~instr[instr_width-1];
 assign o_imm     = instr[width-2:0];
 assign o_imm_pc  = instr[iaddr_width-1:0];
-assign o_is_imm_pc = ~o_is_lit & (o_ipsel != `O_IP_INC);
+assign o_is_imm_pc = ~o_is_lit & ~o_ipsel[1];
 assign o_is_imm  = o_is_lit | o_is_imm_pc;
 
 assign o_alu     = instr[2:0];
@@ -204,7 +204,7 @@ always @(posedge clk)
     RSP <= RSP_next;
 
    wire [width-1:0]       rstack_next;
-assign rstack_next = o_ipsel == `O_IP_INC ? TOS : IP_next;
+assign rstack_next = o_ipsel == `O_IP_INC ? TOS : IP_inc;
 
 always @(posedge clk)
   if (o_rsp_en && o_rsp_dir)

@@ -102,7 +102,8 @@ typedef enum {
               OP_TO_R    = 'he0b4,
               OP_R_FROM  = 'he0dc,
               OP_BRANCH  = 'h8000,
-              OP_0BRANCH = 'ha000
+              OP_0BRANCH = 'ha000,
+              OP_EXECUTE = 'hc0b4
       } opcodes;
 
 initial begin
@@ -239,7 +240,18 @@ initial begin
    reset_cpu();
    exec_op('h0000);
    exec_op(OP_0BRANCH | 'h0300);
-   check_result("0 0BRANCH(0300)", 'h0300, 0, 0, 'hxxxx);
+   check_result("0 0BRANCH", 'h0300, 0, 0, 'hxxxx);
+
+   reset_cpu();
+   exec_op('h0001);
+   exec_op(OP_0BRANCH | 'h0300);
+   check_result("1 0BRANCH", 2, 0, 0, 'hxxxx);
+
+   reset_cpu();
+   exec_op('h0300);
+   exec_op(OP_EXECUTE);
+   check_result("300 EXECUTE", 'h0300, 0, 1, 'hxxxx);
+   check_rstack(0, 2);
 
    $finish;
 end
