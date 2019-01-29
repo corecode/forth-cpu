@@ -103,7 +103,8 @@ localparam stack_width = $clog2(stacksize);
 `define O_PSP_DEC  2'b01
 `define O_PSP_UPD  2'b10
 `define O_PSP_INC  2'b11
-   wire [1:0]               o_psp_op;
+   wire                     o_psp_en;
+   wire                     o_psp_dir;
 
    wire                     o_rsp_en;
    wire                     o_rsp_dir;
@@ -135,7 +136,8 @@ assign o_is_imm_pc = ~o_is_lit & (o_ipsel != `O_IP_INC);
 assign o_is_imm  = o_is_lit | o_is_imm_pc;
 
 assign o_alu     = instr[2:0];
-assign o_psp_op  = (instr[3:2] & {2{o_ipsel[1]}}) | {2{o_is_lit}};
+assign o_psp_en  = (instr[2] & o_ipsel[1]) | o_is_lit | (^o_ipsel);
+assign o_psp_dir = (instr[3] & o_ipsel[1]) | o_is_lit;
 assign o_rsp_en  = (instr[4] | o_ret) & !o_is_lit;
 assign o_rsp_dir = instr[5] & !o_ret;
 assign o_tos_sel = instr[7:6];
@@ -214,7 +216,7 @@ assign rstack_top = rstack[RSP];
 
    reg [stack_width-1:0]  PSP_inc;
 always @(*)
-  case (o_psp_op)
+  case ({o_psp_dir,o_psp_en})
     `O_PSP_NONE: PSP_inc = 0;
     `O_PSP_UPD:  PSP_inc = 0;
     `O_PSP_DEC:  PSP_inc = -1;
@@ -231,7 +233,7 @@ always @(posedge clk)
 
 
 always @(posedge clk)
-  if (o_psp_op[1])
+  if (o_psp_dir)
     pstack[PSP_next] <= TOS;
 
 assign pstack_top = pstack[PSP];
@@ -263,7 +265,8 @@ always @(*)
 always @(*)
   case (1'b1)
     o_is_lit: TOS_next    = {1'b0, o_imm};
-    o_is_imm_pc: TOS_next = TOS;
+    ^o_ipsel: TOS_next = pstack_top;
+    o_ipsel == `O_IP_IMM: TOS_next = TOS;
     default:
       case (o_tos_sel)
         `O_TOS:    TOS_next = TOS;

@@ -87,20 +87,22 @@ task check_rstack(int idx, val data_e);
 endtask
 
 typedef enum {
-              OP_NOP    = 'he040,
-              OP_NOT    = 'he000,
-              OP_ASHR   = 'he001,
-              OP_EQ0    = 'he002,
-              OP_NEG    = 'he003,
-              OP_AND    = 'he004,
-              OP_OR     = 'he005,
-              OP_XOR    = 'he006,
-              OP_ADD    = 'he007,
-              OP_DUP    = 'he04c,
-              OP_SWAP   = 'he088,
-              OP_DROP   = 'he084,
-              OP_TO_R   = 'he0b4,
-              OP_R_FROM = 'he0dc
+              OP_NOP     = 'he040,
+              OP_NOT     = 'he000,
+              OP_ASHR    = 'he001,
+              OP_EQ0     = 'he002,
+              OP_NEG     = 'he003,
+              OP_AND     = 'he004,
+              OP_OR      = 'he005,
+              OP_XOR     = 'he006,
+              OP_ADD     = 'he007,
+              OP_DUP     = 'he04c,
+              OP_SWAP    = 'he088,
+              OP_DROP    = 'he084,
+              OP_TO_R    = 'he0b4,
+              OP_R_FROM  = 'he0dc,
+              OP_BRANCH  = 'h8000,
+              OP_0BRANCH = 'ha000
       } opcodes;
 
 initial begin
@@ -229,6 +231,15 @@ initial begin
    exec_op(OP_R_FROM);
    check_result("1234 5678 0abc >R DROP R>", 6, 2, 0, 'h0abc);
    check_pstack(0, 'h1234);
+
+   reset_cpu();
+   exec_op(OP_BRANCH | 'h0300);
+   check_result("BRANCH(0300)", 'h0300, 0, 0, 'hxxxx);
+
+   reset_cpu();
+   exec_op('h0000);
+   exec_op(OP_0BRANCH | 'h0300);
+   check_result("0 0BRANCH(0300)", 'h0300, 0, 0, 'hxxxx);
 
    $finish;
 end
