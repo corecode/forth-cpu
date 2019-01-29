@@ -128,7 +128,7 @@ assign o_is_imm_pc = ~o_is_lit & (o_ipsel != `O_IP_INC);
 assign o_is_imm  = o_is_lit | o_is_imm_pc;
 
 assign o_alu     = instr[2:0];
-assign o_psp_op  = instr[3:2];
+assign o_psp_op  = (instr[3:2] & {2{o_ipsel[1]}}) | {2{o_is_lit}};
 assign o_rsp_en  = (instr[4] | o_ret) & !o_is_lit;
 assign o_rsp_dir = instr[5] & !o_ret;
 assign o_tos_sel = instr[7:6];
@@ -211,16 +211,11 @@ assign rstack_top = rstack[RSP];
 
    reg [stack_width-1:0]  PSP_inc;
 always @(*)
-  case (1'b1)
-    o_is_lit: PSP_inc    = 1;
-    o_is_imm_pc: PSP_inc = 0;
-    default:
-      case (o_psp_op)
-        `O_PSP_NONE: PSP_inc = 0;
-        `O_PSP_UPD:  PSP_inc = 0;
-        `O_PSP_DEC:  PSP_inc = -1;
-        `O_PSP_INC:  PSP_inc = 1;
-      endcase
+  case (o_psp_op)
+    `O_PSP_NONE: PSP_inc = 0;
+    `O_PSP_UPD:  PSP_inc = 0;
+    `O_PSP_DEC:  PSP_inc = -1;
+    `O_PSP_INC:  PSP_inc = 1;
   endcase
 
 assign PSP_next = PSP + PSP_inc;
@@ -233,17 +228,7 @@ always @(posedge clk)
 
 
 always @(posedge clk)
-  case (1'b1)
-    o_is_lit: pstack[PSP_next] <= TOS;
-    o_is_imm_pc: ;
-    default:
-      casex (o_psp_op)
-        `O_PSP_UPD: pstack[PSP_next] <= TOS;
-        `O_PSP_DEC: pstack[PSP_next] <= TOS;
-        `O_PSP_INC: pstack[PSP_next] <= TOS;
-      endcase
-    endcase
-
+  pstack[PSP_next] <= TOS;
 
 assign pstack_top = pstack[PSP];
 
