@@ -82,6 +82,10 @@ task check_pstack(int idx, val data_e);
    `assert_eq(uut.pstack[uut.PSP-idx], data_e);
 endtask
 
+task check_rstack(int idx, val data_e);
+   `assert_eq(uut.rstack[uut.RSP-idx], data_e);
+endtask
+
 typedef enum {
               OP_NOP  = 'he040,
               OP_NOT  = 'he000,
@@ -93,7 +97,9 @@ typedef enum {
               OP_XOR  = 'he006,
               OP_ADD  = 'he007,
               OP_DUP  = 'he04c,
-              OP_SWAP = 'he088
+              OP_SWAP = 'he088,
+              OP_DROP = 'he084,
+              OP_TO_R = 'he0b4
       } opcodes;
 
 initial begin
@@ -195,6 +201,23 @@ initial begin
    exec_op(OP_SWAP);
    check_result("1234 5678 SWAP", 3, 2, 0, 'h1234);
    check_pstack(0, 'h5678);
+
+   reset_cpu();
+   exec_op('h1234);
+   exec_op('h5678);
+   exec_op('h0abc);
+   exec_op(OP_DROP);
+   check_result("1234 5678 0abc DROP", 4, 2, 0, 'h5678);
+   check_pstack(0, 'h1234);
+
+   reset_cpu();
+   exec_op('h1234);
+   exec_op('h5678);
+   exec_op('h0abc);
+   exec_op(OP_TO_R);
+   check_result("1234 5678 0abc >R", 4, 2, 1, 'h5678);
+   check_pstack(0, 'h1234);
+   check_rstack(0, 'h0abc);
 
    $finish;
 end

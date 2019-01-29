@@ -80,6 +80,13 @@ localparam stack_width = $clog2(stacksize);
  @		1	0	01 XXX
  !++		1	0	01
 
+ Bit Layout:
+
+ | 15  | 14  | 13  | 12  | ...
+ | imm |   ipsel   | ret | ...
+ |  7  |  6  |   5   |   4  |   3   |   2  |  1  |  0  |
+ |  tos_sel  |rsp_dir|rsp_en|psp_dir|psp_en|    alu    |
+
  */
 
 `define O_NOT  3'b000
@@ -139,10 +146,6 @@ assign o_ipsel   = instr[instr_width-2:instr_width-3];
 
 `define OP_NOP 16'he040
 
-// | 15  | 14  | 13  | 12  | ...
-// | imm |   ipsel   | ret | ...
-// |  7  |  6  |   5   |   4  |   3   |   2  |  1  |  0  |
-// |  tos_sel  |rsp_dir|rsp_en|psp_dir|psp_en|    alu    |
 
 // conditional signals ///////////////////////////
 
@@ -228,7 +231,8 @@ always @(posedge clk)
 
 
 always @(posedge clk)
-  pstack[PSP_next] <= TOS;
+  if (o_psp_op[1])
+    pstack[PSP_next] <= TOS;
 
 assign pstack_top = pstack[PSP];
 
