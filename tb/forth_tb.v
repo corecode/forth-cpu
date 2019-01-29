@@ -266,6 +266,13 @@ initial begin
    exec_op(OP_RETURN);
    check_result("300 >R RETURN", 'h0300, 0, 0, 'hxxxx);
 
+   reset_cpu();
+   exec_op('h0300);
+   exec_op(OP_TO_R);
+   exec_op('h1234);
+   exec_op(OP_RETURN|OP_NOT);
+   check_result("300 >R 1234 NOT+RETURN", 'h0300, 1, 0, 'hedcb);
+
    $finish;
 end
 
