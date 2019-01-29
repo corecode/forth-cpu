@@ -233,8 +233,8 @@ assign ain2 = pstack_top;
 
 always @(*)
   case (o_alu)
-    `O_ASHR: alu_out = {ain1[width-1],ain1[width-1:1]};
     `O_NOT: alu_out  = ~ain1;
+    `O_ASHR: alu_out = {ain1[width-1],ain1[width-1:1]};
     `O_EQ0: alu_out  = TOS_is_zero ? ~ain1 : 0;
     `O_NEG: alu_out  = -ain1;   // binary would be smaller
     `O_AND: alu_out  = ain1 & ain2;
