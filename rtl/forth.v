@@ -53,7 +53,7 @@ localparam stack_width = $clog2(stacksize);
 		psp_en	psp_dir	tos_sel	op	rsp_en	rsp_dir	rst_sel	ip_sel
 
  DUP		1	1	01		0	-	-	0
- SWAP		0	-	10		0	-	-	0
+ SWAP		0	1	10		0	-	-	0
  DROP		1	0	10		0	-	-	0
  >R		1	0	10		1	1	0	0
  R>		1	1	11		1	0	-	0
@@ -91,8 +91,13 @@ localparam stack_width = $clog2(stacksize);
 `define O_XOR  3'b110
 `define O_ADD  3'b111
    wire [2:0]               o_alu;
-   wire                     o_psp_en;
-   wire                     o_psp_dir;
+
+`define O_PSP_NONE 2'b00
+`define O_PSP_DEC  2'b01
+`define O_PSP_UPD  2'b10
+`define O_PSP_INC  2'b11
+   wire [1:0]               o_psp_op;
+
    wire                     o_rsp_en;
    wire                     o_rsp_dir;
 
@@ -110,23 +115,26 @@ localparam stack_width = $clog2(stacksize);
 
    wire                     o_ret;
 
+   wire                     o_is_lit;
+   wire                     o_is_imm_pc;
    wire                     o_is_imm;
    wire [width-2:0]         o_imm;
    wire [iaddr_width-1:0]   o_imm_pc;
 
-assign o_is_imm  = ~instr[instr_width-1];
+assign o_is_lit  = ~instr[instr_width-1];
 assign o_imm     = instr[width-2:0];
+assign o_imm_pc  = instr[iaddr_width-1:0];
+assign o_is_imm_pc = ~o_is_lit & (o_ipsel != `O_IP_INC);
+assign o_is_imm  = o_is_lit | o_is_imm_pc;
 
 assign o_alu     = instr[2:0];
-assign o_psp_en  = instr[2] | o_is_imm;
-assign o_psp_dir = instr[3] | o_is_imm;
-assign o_rsp_en  = (instr[4] | o_ret) & !o_is_imm;
+assign o_psp_op  = instr[3:2];
+assign o_rsp_en  = (instr[4] | o_ret) & !o_is_lit;
 assign o_rsp_dir = instr[5] & !o_ret;
 assign o_tos_sel = instr[7:6];
 assign o_ret     = instr[instr_width-4];
 assign o_ipsel   = instr[instr_width-2:instr_width-3];
 
-assign o_imm_pc  = instr[iaddr_width-1:0];
 
 
 `define OP_NOP 16'he040
@@ -154,7 +162,7 @@ always @(posedge clk)
 assign IP_inc = need_wait ? IP : IP + 1;
 
 always @(*)
-  casex ({o_is_imm,o_ret,o_ipsel})
+  casex ({o_is_lit,o_ret,o_ipsel})
     {2'b00,`O_IP_IMM}    : IP_next = o_imm_pc;
     {2'b00,`O_IP_CONDIMM}: IP_next = TOS_is_zero ? o_imm_pc : IP_inc;
     {2'b00,`O_IP_INC}    : IP_next = IP_inc;
@@ -203,10 +211,16 @@ assign rstack_top = rstack[RSP];
 
    reg [stack_width-1:0]  PSP_inc;
 always @(*)
-  casex ({o_psp_en, o_psp_dir})
-    2'b0?: PSP_inc = 0;
-    2'b10: PSP_inc = -1;
-    2'b11: PSP_inc = 1;
+  case (1'b1)
+    o_is_lit: PSP_inc    = 1;
+    o_is_imm_pc: PSP_inc = 0;
+    default:
+      case (o_psp_op)
+        `O_PSP_NONE: PSP_inc = 0;
+        `O_PSP_UPD:  PSP_inc = 0;
+        `O_PSP_DEC:  PSP_inc = -1;
+        `O_PSP_INC:  PSP_inc = 1;
+      endcase
   endcase
 
 assign PSP_next = PSP + PSP_inc;
@@ -219,8 +233,17 @@ always @(posedge clk)
 
 
 always @(posedge clk)
-  if (o_psp_en && o_psp_dir)
-    pstack[PSP_next] <= TOS;
+  case (1'b1)
+    o_is_lit: pstack[PSP_next] <= TOS;
+    o_is_imm_pc: ;
+    default:
+      casex (o_psp_op)
+        `O_PSP_UPD: pstack[PSP_next] <= TOS;
+        `O_PSP_DEC: pstack[PSP_next] <= TOS;
+        `O_PSP_INC: pstack[PSP_next] <= TOS;
+      endcase
+    endcase
+
 
 assign pstack_top = pstack[PSP];
 
@@ -231,11 +254,14 @@ assign pstack_top = pstack[PSP];
 assign ain1 = TOS;
 assign ain2 = pstack_top;
 
+   wire [width-1:0]       ain1_inv;
+assign ain1_inv = ~ain1;
+
 always @(*)
   case (o_alu)
-    `O_NOT: alu_out  = ~ain1;
+    `O_NOT: alu_out  = ain1_inv;
     `O_ASHR: alu_out = {ain1[width-1],ain1[width-1:1]};
-    `O_EQ0: alu_out  = TOS_is_zero ? ~ain1 : 0;
+    `O_EQ0: alu_out  = TOS_is_zero ? ain1_inv : 0;
     `O_NEG: alu_out  = -ain1;   // binary would be smaller
     `O_AND: alu_out  = ain1 & ain2;
     `O_OR: alu_out   = ain1 | ain2;
@@ -246,15 +272,17 @@ always @(*)
 // TOS ///////////////////////////////////////////
 
 always @(*)
-  if (o_is_imm)
-    TOS_next = {1'b0, o_imm};
-  else
-    case (o_tos_sel)
-      `O_TOS:    TOS_next = TOS;
-      `O_ALU:    TOS_next = alu_out;
-      `O_PSTACK: TOS_next = pstack_top;
-      `O_RSTACK: TOS_next = rstack_top;
-    endcase
+  case (1'b1)
+    o_is_lit: TOS_next    = {1'b0, o_imm};
+    o_is_imm_pc: TOS_next = TOS;
+    default:
+      case (o_tos_sel)
+        `O_TOS:    TOS_next = TOS;
+        `O_ALU:    TOS_next = alu_out;
+        `O_PSTACK: TOS_next = pstack_top;
+        `O_RSTACK: TOS_next = rstack_top;
+      endcase
+  endcase
 
 always @(posedge clk)
   if (reset)
