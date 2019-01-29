@@ -140,7 +140,7 @@ assign o_psp_en  = (instr[2] & o_ipsel[1]) | o_is_lit | (^o_ipsel);
 assign o_psp_dir = (instr[3] & o_ipsel[1]) | o_is_lit;
 assign o_rsp_en  = (instr[4] | o_ret) & !o_is_lit;
 assign o_rsp_dir = instr[5] & !o_ret;
-assign o_tos_sel = instr[7:6];
+assign o_tos_sel = ^o_ipsel ? `O_PSTACK : instr[7:6];
 assign o_ret     = instr[instr_width-4];
 assign o_ipsel   = instr[instr_width-2:instr_width-3];
 
@@ -265,7 +265,6 @@ always @(*)
 always @(*)
   case (1'b1)
     o_is_lit: TOS_next    = {1'b0, o_imm};
-    ^o_ipsel: TOS_next = pstack_top;
     o_ipsel == `O_IP_IMM: TOS_next = TOS;
     default:
       case (o_tos_sel)
