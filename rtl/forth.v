@@ -115,9 +115,9 @@ localparam stack_width = $clog2(stacksize);
 `define O_RSTACK 2'b11
    wire [1:0]               o_tos_sel;
 
-`define O_IP_IMM     2'b00
-`define O_IP_CONDIMM 2'b01
-`define O_IP_TOS     2'b10
+`define O_IP_CONDIMM 2'b00
+`define O_IP_IMM     2'b01
+`define O_IP_CALL    2'b10
 `define O_IP_INC     2'b11
    wire [1:0]               o_ipsel;
 
@@ -132,15 +132,16 @@ localparam stack_width = $clog2(stacksize);
 assign o_is_lit  = ~instr[instr_width-1];
 assign o_imm     = instr[width-2:0];
 assign o_imm_pc  = instr[iaddr_width-1:0];
-assign o_is_imm_pc = ~o_is_lit & ~o_ipsel[1];
+assign o_is_imm_pc = ~o_is_lit & ~&o_ipsel;
 assign o_is_imm  = o_is_lit | o_is_imm_pc;
 
 assign o_alu     = instr[2:0];
-assign o_psp_en  = (instr[2] & o_ipsel[1]) | o_is_lit | (^o_ipsel);
-assign o_psp_dir = (instr[3] & o_ipsel[1]) | o_is_lit;
-assign o_rsp_en  = (instr[4] | o_ret) & !o_is_lit;
-assign o_rsp_dir = instr[5] & !o_ret;
-assign o_tos_sel = ^o_ipsel ? `O_PSTACK : instr[7:6];
+assign o_psp_en  = (instr[2] | ~|o_ipsel) | o_is_lit;
+assign o_psp_dir = (instr[3] & &o_ipsel) | o_is_lit;
+assign i_rsp_en  = instr[4];
+assign o_rsp_en  = (i_rsp_en | o_ret | (o_ipsel == `O_IP_CALL)) & !o_is_lit;
+assign o_rsp_dir = instr[5] | (o_ipsel == `O_IP_CALL);
+assign o_tos_sel = instr[7:6];
 assign o_ret     = instr[instr_width-4];
 assign o_ipsel   = instr[instr_width-2:instr_width-3];
 
@@ -164,23 +165,26 @@ always @(posedge clk)
 // instruction fetch /////////////////////////////
 
    wire [iaddr_width-1:0] IP_inc;
-assign IP_inc = need_wait ? IP : IP + 1;
+assign IP_inc = IP + 1;
+
+assign IP_from_TOS = !o_is_imm && o_ret && i_rsp_en;
+assign IP_from_rstack = !o_is_imm && o_ret && !i_rsp_en;
+assign IP_from_imm = o_is_imm_pc && (|o_ipsel || TOS_is_zero);
 
 always @(*)
-  casex ({o_is_lit,o_ret,o_ipsel})
-    {2'b00,`O_IP_IMM}    : IP_next = o_imm_pc;
-    {2'b00,`O_IP_CONDIMM}: IP_next = TOS_is_zero ? o_imm_pc : IP_inc;
-    {2'b00,`O_IP_INC}    : IP_next = IP_inc;
-    {2'b00,`O_IP_TOS}    : IP_next = TOS;
-    {2'b01,2'b??}        : IP_next = rstack_top;
-    {2'b1?,2'b??}        : IP_next = IP_inc;
+  case (1'b1)
+    IP_from_imm:    IP_next = o_imm_pc;
+    IP_from_rstack: IP_next = rstack_top;
+    IP_from_TOS:    IP_next = TOS;
+    default:        IP_next = IP_inc;
   endcase
 
 always @(posedge clk)
   if (reset)
     IP <= 0;
   else
-    IP <= IP_next;
+    if (!need_wait)
+      IP <= IP_next;
 
 assign iaddr = IP_next;
 assign instr = need_wait ? `OP_NOP : idata;
@@ -204,7 +208,8 @@ always @(posedge clk)
     RSP <= RSP_next;
 
    wire [width-1:0]       rstack_next;
-assign rstack_next = o_ipsel == `O_IP_INC ? TOS : IP_inc;
+assign rstack_maybe_load_TOS = !o_is_imm && !o_ret;
+assign rstack_next = rstack_maybe_load_TOS ? TOS : IP_inc;
 
 always @(posedge clk)
   if (o_rsp_en && o_rsp_dir)
@@ -266,6 +271,7 @@ always @(*)
   case (1'b1)
     o_is_lit: TOS_next    = {1'b0, o_imm};
     o_ipsel == `O_IP_IMM: TOS_next = TOS;
+    o_ipsel == `O_IP_CALL: TOS_next = TOS;
     default:
       case (o_tos_sel)
         `O_TOS:    TOS_next = TOS;
