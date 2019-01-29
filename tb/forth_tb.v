@@ -87,19 +87,20 @@ task check_rstack(int idx, val data_e);
 endtask
 
 typedef enum {
-              OP_NOP  = 'he040,
-              OP_NOT  = 'he000,
-              OP_ASHR = 'he001,
-              OP_EQ0  = 'he002,
-              OP_NEG  = 'he003,
-              OP_AND  = 'he004,
-              OP_OR   = 'he005,
-              OP_XOR  = 'he006,
-              OP_ADD  = 'he007,
-              OP_DUP  = 'he04c,
-              OP_SWAP = 'he088,
-              OP_DROP = 'he084,
-              OP_TO_R = 'he0b4
+              OP_NOP    = 'he040,
+              OP_NOT    = 'he000,
+              OP_ASHR   = 'he001,
+              OP_EQ0    = 'he002,
+              OP_NEG    = 'he003,
+              OP_AND    = 'he004,
+              OP_OR     = 'he005,
+              OP_XOR    = 'he006,
+              OP_ADD    = 'he007,
+              OP_DUP    = 'he04c,
+              OP_SWAP   = 'he088,
+              OP_DROP   = 'he084,
+              OP_TO_R   = 'he0b4,
+              OP_R_FROM = 'he0dc
       } opcodes;
 
 initial begin
@@ -218,6 +219,16 @@ initial begin
    check_result("1234 5678 0abc >R", 4, 2, 1, 'h5678);
    check_pstack(0, 'h1234);
    check_rstack(0, 'h0abc);
+
+   reset_cpu();
+   exec_op('h1234);
+   exec_op('h5678);
+   exec_op('h0abc);
+   exec_op(OP_TO_R);
+   exec_op(OP_DROP);
+   exec_op(OP_R_FROM);
+   check_result("1234 5678 0abc >R DROP R>", 6, 2, 0, 'h0abc);
+   check_pstack(0, 'h1234);
 
    $finish;
 end
