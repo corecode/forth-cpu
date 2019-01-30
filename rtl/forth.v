@@ -165,7 +165,7 @@ always @(posedge clk)
 
 // Memory ////////////////////////////////////////
 
-assign daddr = TOS_in;
+assign daddr = TOS_in[daddr_width-1:0];
 assign ddata_write = pstack_top;
 assign dwrite = !o_is_imm && o_tos_sel != `O_ALU && o_alu == 3'b111 && !o_psp_dir;
 
