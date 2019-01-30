@@ -250,19 +250,22 @@ assign pstack_top = pstack[PSP];
 assign ain1 = TOS;
 assign ain2 = pstack_top;
 
-   wire [width-1:0]       ain1_inv;
+   wire [width-1:0]       ain1_inv, alu_add1, alu_add2, alu_add;
 assign ain1_inv = ~ain1;
+assign alu_add1 = o_alu[2] ? ain1 : ain1_inv;
+assign alu_add2 = o_alu[2] ? ain2 : 1;
+assign alu_add = alu_add1 + alu_add2;
 
 always @(*)
   case (o_alu)
     `O_NOT: alu_out  = ain1_inv;
     `O_ASHR: alu_out = {ain1[width-1],ain1[width-1:1]};
     `O_EQ0: alu_out  = TOS_is_zero ? ain1_inv : 0;
-    `O_NEG: alu_out  = -ain1;   // binary would be smaller
     `O_AND: alu_out  = ain1 & ain2;
     `O_OR: alu_out   = ain1 | ain2;
     `O_XOR: alu_out  = ain1 ^ ain2;
-    `O_ADD: alu_out  = ain1 + ain2;
+    `O_ADD: alu_out  = alu_add;
+    `O_NEG: alu_out  = alu_add;
   endcase
 
 // TOS ///////////////////////////////////////////
