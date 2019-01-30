@@ -39,8 +39,9 @@ localparam stack_width = $clog2(stacksize);
    wire [stack_width-1:0]   RSP_next;
    reg [iaddr_width-1:0]    IP;
    reg [iaddr_width-1:0]    IP_next;
-   reg [width-1:0]          TOS;
+   reg [width-1:0]          TOS_reg;
    reg [width-1:0]          TOS_next;
+   wire [width-1:0]         TOS_in;
 
    reg [width-1:0]          pstack[0:stacksize-1];
    wire [width-1:0]         pstack_top;
@@ -153,7 +154,7 @@ assign o_ipsel   = instr[instr_width-2:instr_width-3];
 // conditional signals ///////////////////////////
 
    wire                  TOS_is_zero;
-assign TOS_is_zero = !(|TOS);
+assign TOS_is_zero = !(|TOS_in);
 
    reg need_wait;
 always @(posedge clk)
@@ -161,6 +162,18 @@ always @(posedge clk)
     need_wait <= 1;
   else
     need_wait <= 0;
+
+// Memory ////////////////////////////////////////
+
+assign daddr = TOS_in;
+assign ddata_write = pstack_top;
+assign dwrite = !o_is_imm && o_tos_sel != `O_ALU && o_alu == 3'b111 && !o_psp_dir;
+
+   reg TOS_from_mem;
+always @(posedge clk)
+  TOS_from_mem <= !o_is_imm && o_tos_sel != `O_ALU && o_alu == 3'b011 && !o_psp_dir;
+
+assign TOS_in = TOS_from_mem ? ddata_read : TOS_reg;
 
 // instruction fetch /////////////////////////////
 
@@ -175,7 +188,7 @@ always @(*)
   case (1'b1)
     IP_from_imm:    IP_next = o_imm_pc;
     IP_from_rstack: IP_next = rstack_top;
-    IP_from_TOS:    IP_next = TOS;
+    IP_from_TOS:    IP_next = TOS_in;
     default:        IP_next = IP_inc;
   endcase
 
@@ -210,7 +223,7 @@ always @(posedge clk)
 
    wire [width-1:0]       rstack_next;
 assign rstack_maybe_load_TOS = !o_is_imm && !o_ret;
-assign rstack_next = rstack_maybe_load_TOS ? TOS : IP_inc;
+assign rstack_next = rstack_maybe_load_TOS ? TOS_in : IP_inc;
 
 always @(posedge clk)
   if (!need_wait)
@@ -243,7 +256,7 @@ always @(posedge clk)
 always @(posedge clk)
   if (!need_wait)
     if (o_psp_dir)
-      pstack[PSP_next] <= TOS;
+      pstack[PSP_next] <= TOS_in;
 
 assign pstack_top = pstack[PSP];
 
@@ -251,7 +264,7 @@ assign pstack_top = pstack[PSP];
 
    wire [width-1:0]       ain1, ain2;
    reg [width-1:0]        alu_out;
-assign ain1 = TOS;
+assign ain1 = TOS_in;
 assign ain2 = pstack_top;
 
    wire [width-1:0]       ain1_inv, alu_add1, alu_add2, alu_add;
@@ -272,16 +285,16 @@ always @(*)
     `O_NEG: alu_out  = alu_add;
   endcase
 
-// TOS ///////////////////////////////////////////
+// TOS_in ///////////////////////////////////////////
 
 always @(*)
   case (1'b1)
-    o_is_lit: TOS_next    = {1'b0, o_imm};
-    o_ipsel == `O_IP_IMM: TOS_next = TOS;
-    o_ipsel == `O_IP_CALL: TOS_next = TOS;
+    o_is_lit: TOS_next = {1'b0, o_imm};
+    (o_ipsel == `O_IP_IMM): TOS_next = TOS_in;
+    (o_ipsel == `O_IP_CALL): TOS_next = TOS_in;
     default:
       case (o_tos_sel)
-        `O_TOS:    TOS_next = TOS;
+        `O_TOS:    TOS_next = TOS_in;
         `O_ALU:    TOS_next = alu_out;
         `O_PSTACK: TOS_next = pstack_top;
         `O_RSTACK: TOS_next = rstack_top;
@@ -290,9 +303,9 @@ always @(*)
 
 always @(posedge clk)
   if (reset)
-    TOS <= 0;
+    TOS_reg <= 0;
   else
     if (!need_wait)
-      TOS <= TOS_next;
+      TOS_reg <= TOS_next;
 
 endmodule

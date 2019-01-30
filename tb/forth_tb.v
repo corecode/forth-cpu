@@ -15,7 +15,7 @@ module forth_tb;
 
    wire [7:0]  daddr;
    wire [15:0] ddata_write;
-   wire [15:0] ddata_read;
+   reg [15:0] ddata_read;
    wire        dwrite;
 
 forth uut(.clk(clk), .reset(reset), .iaddr(iaddr), .idata(idata), .daddr(daddr), .ddata_write(ddata_write), .ddata_read(ddata_read), .dwrite(dwrite));
@@ -75,7 +75,7 @@ task check_result(string check, val IP_e, val PSP_e, val RSP_e, val TOS_e);
    `assert_eq(uut.IP, IP_e);
    `assert_eq(uut.PSP, PSP_e);
    `assert_eq(uut.RSP, RSP_e);
-   `assert_eq(uut.TOS, TOS_e);
+   `assert_eq(uut.TOS_in, TOS_e);
 endtask
 
 task check_pstack(int idx, val data_e);
@@ -105,7 +105,9 @@ typedef enum {
               OP_0BRANCH = 'h8000,
               OP_CALL    = 'hc000,
               OP_EXECUTE = 'hf074,
-              OP_RETURN  = 'hf000
+              OP_RETURN  = 'hf000,
+              OP_MWRITE  = 'he047,
+              OP_MREAD   = 'he043
       } opcodes;
 
 initial begin
@@ -272,6 +274,20 @@ initial begin
    exec_op('h1234);
    exec_op(OP_RETURN|OP_NOT);
    check_result("300 >R 1234 NOT+RETURN", 'h0300, 1, 0, 'hedcb);
+
+   reset_cpu();
+   exec_op('h1234);
+   exec_op('h0056);
+   exec_op(OP_MWRITE);
+   check_result("1234 56 !'", 3, 1, 0, 'hxxxx);
+
+   reset_cpu();
+   exec_op('h1234);
+   exec_op('h0056);
+   exec_op(OP_MWRITE);
+   ddata_read = 'h2345;
+   exec_op(OP_MREAD);
+   check_result("1234 56 !' @", 4, 1, 0, 'h2345);
 
    $finish;
 end
