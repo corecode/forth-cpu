@@ -169,12 +169,6 @@ assign daddr = TOS_in;
 assign ddata_write = pstack_top;
 assign dwrite = !o_is_imm && o_tos_sel != `O_ALU && o_alu == 3'b111 && !o_psp_dir;
 
-   reg TOS_from_mem;
-always @(posedge clk)
-  TOS_from_mem <= !o_is_imm && o_tos_sel != `O_ALU && o_alu == 3'b011 && !o_psp_dir;
-
-assign TOS_in = TOS_from_mem ? ddata_read : TOS_reg;
-
 // instruction fetch /////////////////////////////
 
    wire [iaddr_width-1:0] IP_inc;
@@ -307,5 +301,11 @@ always @(posedge clk)
   else
     if (!need_wait)
       TOS_reg <= TOS_next;
+
+   reg                    TOS_from_mem;
+always @(posedge clk)
+  TOS_from_mem <= !o_is_imm && o_tos_sel != `O_ALU && o_alu == 3'b011 && !o_psp_dir;
+
+assign TOS_in = TOS_from_mem ? ddata_read : TOS_reg;
 
 endmodule
