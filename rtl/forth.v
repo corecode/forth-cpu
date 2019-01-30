@@ -187,7 +187,7 @@ always @(posedge clk)
       IP <= IP_next;
 
 assign iaddr = IP_next;
-assign instr = need_wait ? `OP_NOP : idata;
+assign instr = idata;
 
 // RSP ///////////////////////////////////////////
 
@@ -205,15 +205,17 @@ always @(posedge clk)
   if (reset)
     RSP <= 0;
   else
-    RSP <= RSP_next;
+    if (!need_wait)
+      RSP <= RSP_next;
 
    wire [width-1:0]       rstack_next;
 assign rstack_maybe_load_TOS = !o_is_imm && !o_ret;
 assign rstack_next = rstack_maybe_load_TOS ? TOS : IP_inc;
 
 always @(posedge clk)
-  if (o_rsp_en && o_rsp_dir)
-    rstack[RSP_next] <= rstack_next;
+  if (!need_wait)
+    if (o_rsp_en && o_rsp_dir)
+      rstack[RSP_next] <= rstack_next;
 
 assign rstack_top = rstack[RSP];
 
@@ -234,12 +236,14 @@ always @(posedge clk)
   if (reset)
     PSP <= 0;
   else
-    PSP <= PSP_next;
+    if (!need_wait)
+      PSP <= PSP_next;
 
 
 always @(posedge clk)
-  if (o_psp_dir)
-    pstack[PSP_next] <= TOS;
+  if (!need_wait)
+    if (o_psp_dir)
+      pstack[PSP_next] <= TOS;
 
 assign pstack_top = pstack[PSP];
 
@@ -288,6 +292,7 @@ always @(posedge clk)
   if (reset)
     TOS <= 0;
   else
-    TOS <= TOS_next;
+    if (!need_wait)
+      TOS <= TOS_next;
 
 endmodule
