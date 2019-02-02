@@ -1,5 +1,5 @@
 module ip_comb
-  #(
+  #(parameter
     iaddr_width = 10
     )
 (

@@ -1,5 +1,5 @@
 module alu_reg_sel
-  #(
+  #(parameter
     width = 16
     )
 (
@@ -19,7 +19,7 @@ endmodule
 
 
 module alu_logic
-  #(
+  #(parameter
     width = 16
     )
 (
@@ -41,7 +41,7 @@ endmodule
 
 
 module alu_adder
-  #(
+  #(parameter
     width = 16
     )
 (
@@ -62,7 +62,7 @@ endmodule
 
 
 module alu_mux
-  #(
+  #(parameter
     width = 16
     )
 (
@@ -82,7 +82,7 @@ endmodule
 
 
 module tos_mux
-  #(
+  #(parameter
     width = 16
     )
 (
@@ -110,7 +110,7 @@ endmodule
 
 
 module tos_comb
-  #(
+  #(parameter
     width = 16
     )
 (
@@ -153,7 +153,7 @@ endmodule
 
 
 module tos_mem
-  #(
+  #(parameter
     width = 16,
     daddr_width = 8
     )

@@ -1,5 +1,5 @@
 module cpu_execute
-  #(
+  #(parameter
     width = 16,
     idata_width = width,
     iaddr_width = 10,
@@ -106,7 +106,7 @@ endmodule
 
 
 module cpu_decode
-  #(
+  #(parameter
     width = 16,
     idata_width = width,
     iaddr_width = 10
@@ -350,7 +350,7 @@ endmodule
 
 
 module cpu
-  #(
+  #(parameter
     width = 16,
     idata_width = width,
     iaddr_width = 10,

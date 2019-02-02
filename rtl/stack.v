@@ -1,5 +1,5 @@
 module sp_comb
-  #(
+  #(parameter
     saddr_width = 8
     )
 (
@@ -49,7 +49,7 @@ endmodule
 
 
 module stack
-  #(
+  #(parameter
     saddr_width = 8,
     width = 16
     )
