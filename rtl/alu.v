@@ -160,6 +160,7 @@ module tos_mem
 (
  input                    clk,
  input                    reset,
+ input                    wait_state,
 
  input [width-1:0]        tos_result,
  output [width-1:0]       TOS,
@@ -181,7 +182,11 @@ module tos_mem
 
 
 always @(posedge clk)
-  TOS_r <= tos_result;
+  if (reset)
+    TOS_r <= {width{1'bx}};
+  else
+    if (!wait_state)
+      TOS_r <= tos_result;
 
 assign TOS = mem_read_r ? dQ : TOS_r;
 

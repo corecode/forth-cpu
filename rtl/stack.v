@@ -56,6 +56,7 @@ module stack
 (
  input                  clk,
  input                  reset,
+ input                  wait_state,
 
  input [width-1:0]      D,
  input                  dec,
@@ -64,23 +65,25 @@ module stack
  output reg [width-1:0] Q
  );
 
-   reg [width-1:0]        stack_mem[0:(2**saddr_width)-1];
-   reg [saddr_width-1:0]  SP;
+   reg [width-1:0]  stack_mem[0:(2**saddr_width)-1];
+   reg [saddr_width-1:0] SP;
    wire [saddr_width-1:0] SP_result;
 
 sp_comb #(.saddr_width(saddr_width)) sp_comb(.*);
 
-always @(posedge clk, posedge reset)
+always @(posedge clk)
   if (reset)
     SP <= 0;
   else
-    SP <= SP_result;
+    if (!wait_state)
+      SP <= SP_result;
 
 always @(posedge clk)
-  if (change || update)
-    stack_mem[SP_result] <= D;
+  if (!wait_state)
+    if (update)
+      stack_mem[SP_result] <= D;
 
-always @(posedge clk)
-    Q <= stack_mem[SP_result];
+always @(*)
+  Q = stack_mem[SP];
 
 endmodule

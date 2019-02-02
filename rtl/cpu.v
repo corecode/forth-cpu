@@ -51,7 +51,10 @@ module cpu_execute
  input                    mem_read
 );
 
+   reg                    wait_state;
+
    reg [iaddr_width-1:0]  IP;
+   wire [iaddr_width-1:0] ip_inc;
    wire [iaddr_width-1:0] ip_result;
 
    wire [width-1:0]       TOS;
@@ -78,7 +81,7 @@ pstack(.D(TOS),
        .*);
 
 
-assign rstack_result = rstack_ip_sel ? IP : TOS;
+assign rstack_result = rstack_ip_sel ? ip_inc : TOS;
 
 stack #(.saddr_width(rsaddr_width))
 rstack(.D(rstack_result),
@@ -94,11 +97,20 @@ ip_comb(.TOS(TOS[iaddr_width-1:0]),
         .rstack_top(rstack_top[iaddr_width-1:0]),
         .*);
 
+
 always @(posedge clk, posedge reset)
   if (reset)
-    IP <= 0;
+    wait_state <= 0;
   else
-    IP <= ip_result;
+    wait_state <= 0;
+
+
+always @(posedge clk, posedge reset)
+  if (reset)
+    IP <= -1;
+  else
+    if (!wait_state)
+      IP <= ip_result;
 
 assign iaddr = ip_result;
 
@@ -154,7 +166,10 @@ module cpu_decode
  * 10: tos_op[2]
  *  9: tos_op[1]
  *  8: tos_op[0]
- *
+ *  7: pstack_op[1]
+ *  6: pstack_op[0]
+ *  5: rstack_op[1]
+ *  4: rstack_op[0]
  */
 
    reg [3:0]              tos_op;
@@ -240,24 +255,23 @@ always @(*)
 
 always @(*)
   case (1'b1)
-    ip_imm:     pstack_op = 2'b01;
+    imm_sel:    pstack_op = 2'b01;
     ip_cond:    pstack_op = 2'b11;
     ip_imm_sel: pstack_op = 2'b00;
     default:    pstack_op = i_pstack_op;
   endcase
 
 always @(*) begin
-   pupdate = 1'bx;
-   pdec    = 1'bx;
+   pchange = 1'b0;
+   pupdate = 1'b0;
+   pdec    = 1'b0;
 
    case (pstack_op)
      2'b00: begin
-        pchange = 0;
-        pupdate = 0;
      end
      2'b01: begin
         pchange = 1;
-        pdec    = 0;
+        pupdate = 1;
      end
      2'b10: begin
         pchange = 0;

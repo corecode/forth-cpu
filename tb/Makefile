@@ -1,5 +1,5 @@
-SRC= ../rtl/forth.v
-TB= forth_tb
+SRC= ../rtl/cpu.v ../rtl/alu.v ../rtl/stack.v ../rtl/ip.v
+TB= cpu_tb
 
 test: $(addsuffix .vcd,${TB})
 

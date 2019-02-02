@@ -14,20 +14,22 @@ module ip_comb
  input                        ip_reg_sel,
  input                        ip_imm_sel,
  input                        ip_skip,
+
+ output [iaddr_width-1:0]     ip_inc,
  output reg [iaddr_width-1:0] ip_result
  );
 
-   wire [iaddr_width-1:0]     IP_inc;
+   wire [iaddr_width-1:0]     ip_inc;
 
-assign IP_inc = IP + 1;
+assign ip_inc = IP + 1;
 
 always @(*)
   case (1'b1)
-    ip_skip && ~TOS_is_zero:   ip_result = IP_inc;
+    ip_skip && ~TOS_is_zero:   ip_result = ip_inc;
     ip_imm_sel:                ip_result = ip_imm;
     ip_reg_sel && !ip_tos_sel: ip_result = rstack_top;
     ip_reg_sel && ip_tos_sel:  ip_result = TOS;
-    default:                   ip_result = IP_inc;
+    default:                   ip_result = ip_inc;
   endcase
 
 endmodule
