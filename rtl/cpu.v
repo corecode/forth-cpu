@@ -33,6 +33,7 @@ module cpu_execute
  input                    zero_arg,
  input [1:0]              logic_op,
  input                    sub,
+ input                    inc,
  input                    adder_sel,
  input                    shift_sel,
  input                    zero_sel,
@@ -125,6 +126,7 @@ module cpu_decode
  output reg               zero_arg,
  output reg [1:0]         logic_op,
  output reg               sub,
+ output reg               inc,
  output reg               adder_sel,
  output reg               shift_sel,
  output reg               zero_sel,
@@ -278,121 +280,68 @@ always @(*)
 
 always @(*) begin
    rstack_sel = 1'b0;
-   zero_arg   = 1'bx;
-   logic_op   = 1'bx;
-   sub        = 1'bx;
-   adder_sel  = 1'bx;
-   shift_sel  = 1'bx;
+   zero_arg   = 1'b0;
+   logic_op   = 1'b0;
+   sub        = 1'b0;
+   inc        = 1'b0;
+   adder_sel  = 1'b0;
+   shift_sel  = 1'b0;
    zero_sel   = 1'b0;
-   reg_sel    = 1'bx;
-
+   reg_sel    = 1'b0;
    mem_read   = 1'b0;
    mem_write  = 1'b0;
 
    case (tos_op)
      4'h0: begin                // +
-        zero_arg  = 1;
-        logic_op  = 2'b00;
         sub       = 0;
         adder_sel = 1;
-        shift_sel = 0;
-        zero_sel  = 0;
-        reg_sel   = 0;
      end
      4'h1: begin                // -
-        logic_op  = 2'b11;
         sub       = 1;
         adder_sel = 1;
-        shift_sel = 0;
-        zero_sel  = 0;
-        reg_sel   = 0;
      end
      4'h2: begin                // /2
         shift_sel = 1;
-        zero_sel  = 0;
-        reg_sel   = 0;
      end
      4'h3: begin                // 0=
-        zero_arg  = 1;
-        logic_op  = 2'b11;
-        adder_sel = 0;
-        shift_sel = 0;
-        zero_sel  = 0;
-        reg_sel   = 0;
+        logic_op = 2'b11;
+        zero_sel = 1;
      end
      4'h4: begin                // XOR
-        rstack_sel = 0;
-        zero_arg   = 0;
         logic_op   = 2'b00;
-        adder_sel  = 0;
-        shift_sel  = 0;
-        zero_sel   = 0;
-        reg_sel    = 0;
      end
      4'h5: begin                // OR
-        rstack_sel = 0;
-        zero_arg   = 0;
         logic_op   = 2'b01;
-        adder_sel  = 0;
-        shift_sel  = 0;
-        zero_sel   = 0;
-        reg_sel    = 0;
      end
      4'h6: begin                // AND
-        rstack_sel = 0;
-        zero_arg   = 0;
         logic_op   = 2'b10;
-        adder_sel  = 0;
-        shift_sel  = 0;
-        zero_sel   = 0;
-        reg_sel    = 0;
      end
      4'h7: begin                // NOT
         logic_op  = 2'b11;
-        adder_sel = 0;
-        shift_sel = 0;
-        zero_sel  = 0;
-        reg_sel   = 0;
      end
-     4'h8: begin                // TOS: DUP, XXX use for ip_imm_sel
+     4'h8: begin                // TOS: DUP CALL BRANCH
         zero_arg  = 1;
         logic_op  = 2'b00;
-        adder_sel = 0;
-        shift_sel = 0;
-        zero_sel  = 0;
-        reg_sel   = 0;
      end
      4'h9: begin                // pstack: SWAP DROP EXECUTE LIT !'
         rstack_sel = 0;
-        zero_arg   = 0;
         reg_sel    = 1;
      end
      4'ha: begin                // rstack: R> R@
         rstack_sel = 1;
-        zero_arg   = 0;
         reg_sel    = 1;
      end
      4'hc: begin                // @
-        mem_read = 1;
+        mem_read  = 1;
         zero_arg  = 1;
-        logic_op  = 2'b00;
-        adder_sel = 0;
-        shift_sel = 0;
-        zero_sel  = 0;
-        reg_sel   = 0;
+        adder_sel = 1;
+        inc       = 1;
      end
      4'hd: begin                // !
         mem_write = 1;
         zero_arg  = 1;
-        logic_op  = 2'b00;
-        adder_sel = 0;
-        shift_sel = 0;
-        zero_sel  = 0;
-        reg_sel   = 0;
-     end
-     default: begin             // missing: XXX @ !'
-        zero_arg = 1;
-        reg_sel  = 1;
+        adder_sel = 1;
+        inc       = 1;
      end
    endcase
 end
@@ -436,6 +385,7 @@ module cpu
    wire                   zero_arg;
    wire [1:0]             logic_op;
    wire                   sub;
+   wire                   inc;
    wire                   adder_sel;
    wire                   shift_sel;
    wire                   zero_sel;

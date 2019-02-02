@@ -6,13 +6,11 @@ module alu_reg_sel
  input [width-1:0]      rstack_top,
  input [width-1:0]      pstack_top,
  input                  rstack_sel,
- input                  zero_arg,
  output reg [width-1:0] reg_result
  );
 
 always @(*)
   case (1'b1)
-    zero_arg:   reg_result = 0;
     rstack_sel: reg_result = rstack_top;
     default:    reg_result = pstack_top;
   endcase
@@ -26,16 +24,16 @@ module alu_logic
     )
 (
  input [width-1:0]      TOS,
- input [width-1:0]      NOS,
+ input [width-1:0]      arg,
  input [1:0]            logic_op,
  output reg [width-1:0] logic_result
  );
 
 always @(*)
   case (logic_op)
-    2'b00: logic_result = TOS ^ NOS;
-    2'b01: logic_result = TOS | NOS;
-    2'b10: logic_result = TOS & NOS;
+    2'b00: logic_result = TOS ^ arg;
+    2'b01: logic_result = TOS | arg;
+    2'b10: logic_result = TOS & arg;
     2'b11: logic_result = ~TOS;
   endcase
 
@@ -48,16 +46,17 @@ module alu_adder
     )
 (
  input [width-1:0]      TOS,
- input [width-1:0]      NOS,
+ input [width-1:0]      arg,
  input                  sub,
+ input                  inc,
  output reg [width-1:0] adder_result
  );
 
 always @(*)
   if (sub)
-    adder_result = NOS - TOS;
+    adder_result = arg - TOS;
   else
-    adder_result = NOS + TOS;
+    adder_result = arg + TOS + inc;
 
 endmodule
 
@@ -68,18 +67,13 @@ module alu_mux
     )
 (
  input [width-1:0]      logic_result,
- input [width-1:0]      adder_result,
  input [width-1:0]      TOS,
- input                  adder_sel,
  input                  shift_sel,
- input                  zero_sel,
  output reg [width-1:0] alu_mux_result
  );
 
 always @(*)
   case (1'b1)
-    adder_sel: alu_mux_result = adder_result;
-    zero_sel:  alu_mux_result = 0;
     shift_sel: alu_mux_result = {TOS[width-1],TOS[width-1:1]};
     default:   alu_mux_result = logic_result;
   endcase
@@ -94,17 +88,22 @@ module tos_mux
 (
  input [width-1:0]      reg_result,
  input [width-1:0]      alu_mux_result,
+ input [width-1:0]      adder_result,
  input [width-1:0]      imm,
  input                  reg_sel,
+ input                  adder_sel,
+ input                  zero_sel,
  input                  imm_sel,
  output reg [width-1:0] tos_result
  );
 
 always @(*)
   case (1'b1)
-    imm_sel: tos_result = imm;
-    reg_sel: tos_result = reg_result;
-    default: tos_result = alu_mux_result;
+    adder_sel & ~imm_sel: tos_result = adder_result;
+    imm_sel:              tos_result = imm;
+    zero_sel:             tos_result = 0;
+    reg_sel:              tos_result = reg_result;
+    default:              tos_result = alu_mux_result;
   endcase
 
 endmodule
@@ -126,6 +125,7 @@ module tos_comb
  input              zero_arg,
  input [1:0]        logic_op,
  input              sub,
+ input              inc,
  input              adder_sel,
  input              shift_sel,
  input              zero_sel,
@@ -139,13 +139,15 @@ module tos_comb
    wire [width-1:0] adder_result;
    wire [width-1:0] alu_mux_result;
 
-alu_reg_sel #(.width(width)) alu_reg_sel(.*);
-alu_logic #(.width(width)) alu_logic(.NOS(reg_result), .*);
-alu_adder #(.width(width)) alu_adder(.NOS(pstack_top), .*);
-alu_mux #(.width(width)) alu_mux(.zero_sel(zero_sel & ~TOS_is_zero), .*);
-tos_mux #(.width(width)) tos_mux(.*);
+   wire [width-1:0] arg;
 
-// XXX somehow synplify duplicates the alu_reg_sel LUTs?
+assign arg = zero_arg ? 0 : pstack_top;
+
+alu_reg_sel #(.width(width)) alu_reg_sel(.*);
+alu_logic #(.width(width)) alu_logic(.*);
+alu_adder #(.width(width)) alu_adder(.*);
+alu_mux #(.width(width)) alu_mux(.*);
+tos_mux #(.width(width)) tos_mux(.zero_sel(zero_sel & ~TOS_is_zero), .*);
 
 endmodule
 
@@ -195,6 +197,6 @@ always @(posedge clk or posedge reset)
   if (reset)
     mem_read_r <= 0;
   else
-    mem_read_r     <= mem_read;
+    mem_read_r <= mem_read;
 
 endmodule

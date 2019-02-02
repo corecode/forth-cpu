@@ -17,13 +17,17 @@ module ip_comb
  output reg [iaddr_width-1:0] ip_result
  );
 
+   wire [iaddr_width-1:0]     IP_inc;
+
+assign IP_inc = IP + 1;
+
 always @(*)
   case (1'b1)
-    ip_skip && ~TOS_is_zero:   ip_result = IP + 1;
+    ip_skip && ~TOS_is_zero:   ip_result = IP_inc;
     ip_imm_sel:                ip_result = ip_imm;
     ip_reg_sel && !ip_tos_sel: ip_result = rstack_top;
     ip_reg_sel && ip_tos_sel:  ip_result = TOS;
-    default:                   ip_result = IP + 1;
+    default:                   ip_result = IP_inc;
   endcase
 
 endmodule
