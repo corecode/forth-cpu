@@ -15,22 +15,25 @@ module sp_comb
 assign arg = dec ? -1 : 1;
 assign result = change ? SP + arg : SP;
 
-`ifdef NO_MANUAL_LUTS
+`ifndef NO_MANUAL_LUTS
 
-   wire [saddr_width-1:1] carry;
+   wire [saddr_width-1:0] carry;
+
+assign carry[0] = change ^ dec;
 
    genvar                 i;
-for (i = 0; i < saddr_width; i++) begin
+for (i = 0; i < saddr_width; i = i + 1)
+ begin
    SB_LUT4 #(.LUT_INIT(i != 0 ? 16'b1001_0110_1100_1100 : 16'b0011_0011_1100_1100))
    incdec(.O(SP_result[i]),
-          .I0(i == 0 ? 1'b0 : carry[i]),
+          .I0(carry[i]),
           .I1(SP[i]),
           .I2(dec),
           .I3(change));
 
    if (i < saddr_width-1)
      SB_CARRY carry(.CO(carry[i+1]),
-                    .CI(i == 0 ? 1'b0 : carry[i]),
+                    .CI(carry[i]),
                     .I0(SP[i]),
                     .I1(dec));
 end

@@ -1,4 +1,4 @@
-SRC= ../rtl/cpu.v ../rtl/alu.v ../rtl/stack.v ../rtl/ip.v
+SRC= ../rtl/cpu.v ../rtl/alu.v ../rtl/stack.v ../rtl/ip.v lut.v
 TB= cpu_tb
 
 test: $(addsuffix .vcd,${TB})
