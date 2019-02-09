@@ -1,7 +1,6 @@
 module cpu_execute
   #(parameter
     width = 16,
-    idata_width = width,
     iaddr_width = 10,
     daddr_width = 8,
     psaddr_width = 8,
@@ -12,7 +11,6 @@ module cpu_execute
  input                    reset,
 
  output [iaddr_width-1:0] iaddr,
- input [width-1:0]        idata,
 
  output [daddr_width-1:0] daddr,
  output                   dwrite,
@@ -416,11 +414,12 @@ module cpu
    wire                   mem_write;
    wire                   mem_read;
 
-cpu_decode #(.width(width), .idata_width(idata_width))
+cpu_decode #(.width(width),
+             .iaddr_width(iaddr_width),
+             .idata_width(idata_width))
 cpu_decode(.*);
 
 cpu_execute #(.width(width),
-              .idata_width(idata_width),
               .iaddr_width(iaddr_width),
               .daddr_width(daddr_width),
               .psaddr_width(psaddr_width),

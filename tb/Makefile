@@ -1,5 +1,5 @@
-SRC= ../rtl/cpu.v ../rtl/alu.v ../rtl/stack.v ../rtl/ip.v lut.v
-TB= cpu_tb
+SRC= ../rtl/cpu.v ../rtl/alu.v ../rtl/stack.v ../rtl/ip.v lut.v ../rtl/gpio.v ../rtl/membus.v ../rtl/cpu_top.v ../rtl/spi.v ../rtl/top.v
+TB= cpu_tb top_tb
 
 test: $(addsuffix .vcd,${TB})
 

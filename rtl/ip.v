@@ -19,8 +19,6 @@ module ip_comb
  output reg [iaddr_width-1:0] ip_result
  );
 
-   wire [iaddr_width-1:0]     ip_inc;
-
 assign ip_inc = IP + 1;
 
 always @(*)
