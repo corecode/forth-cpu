@@ -1,3 +1,5 @@
+`default_nettype none
+
 module ip_comb
   #(parameter
     iaddr_width = 10

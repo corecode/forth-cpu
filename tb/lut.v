@@ -1,3 +1,5 @@
+`default_nettype none
+
 module SB_LUT4
   #(parameter
     [15:0] LUT_INIT = 16'h0000

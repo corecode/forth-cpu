@@ -1,3 +1,5 @@
+`default_nettype none
+
 module alu_reg_sel
   #(parameter
     width = 16

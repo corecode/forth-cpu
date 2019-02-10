@@ -1,3 +1,5 @@
+`default_nettype none
+
 module cpu_top
   #(parameter
     npins = 16,

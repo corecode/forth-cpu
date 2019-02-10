@@ -1,3 +1,5 @@
+`default_nettype none
+
 module membus
   #(parameter
     width = 16,

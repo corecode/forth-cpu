@@ -1,3 +1,5 @@
+`default_nettype none
+
 module forth
   (
    clk,
@@ -130,6 +132,8 @@ localparam stack_width = $clog2(stacksize);
    wire [width-2:0]         o_imm;
    wire [iaddr_width-1:0]   o_imm_pc;
 
+   wire                     i_rsp_en;
+
 assign o_is_lit  = ~instr[instr_width-1];
 assign o_imm     = instr[width-2:0];
 assign o_imm_pc  = instr[iaddr_width-1:0];
@@ -174,6 +178,10 @@ assign dwrite = !o_is_imm && o_tos_sel != `O_ALU && o_alu == 3'b111 && !o_psp_di
    wire [iaddr_width-1:0] IP_inc;
 assign IP_inc = IP + 1;
 
+   wire                   IP_from_TOS;
+   wire                   IP_from_rstack;
+   wire                   IP_from_imm;
+
 assign IP_from_TOS = !o_is_imm && o_ret && i_rsp_en;
 assign IP_from_rstack = !o_is_imm && o_ret && !i_rsp_en;
 assign IP_from_imm = o_is_imm_pc && (|o_ipsel || TOS_is_zero);
@@ -216,6 +224,7 @@ always @(posedge clk)
       RSP <= RSP_next;
 
    wire [width-1:0]       rstack_next;
+   wire                   rstack_maybe_load_TOS;
 assign rstack_maybe_load_TOS = !o_is_imm && !o_ret;
 assign rstack_next = rstack_maybe_load_TOS ? TOS_in : IP_inc;
 

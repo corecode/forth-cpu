@@ -1,3 +1,5 @@
+`default_nettype none
+
 module spi
   #(parameter
     width = 16)

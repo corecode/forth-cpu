@@ -1,3 +1,5 @@
+`default_nettype none
+
 module gpio
   #(parameter
     npins = 16

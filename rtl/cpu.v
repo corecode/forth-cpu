@@ -1,3 +1,5 @@
+`default_nettype none
+
 module cpu_execute
   #(parameter
     width = 16,

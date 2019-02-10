@@ -1,3 +1,5 @@
+`default_nettype none
+
 module top_tb;
 
    reg clk;

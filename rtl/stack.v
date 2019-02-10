@@ -1,3 +1,5 @@
+`default_nettype none
+
 module sp_comb
   #(parameter
     saddr_width = 8

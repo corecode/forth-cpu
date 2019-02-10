@@ -1,3 +1,5 @@
+`default_nettype none
+
 `define assert_eq(v1, v2) \
 if(($isunknown(v1) && !$isunknown(v2)) || v1 != v2) begin \
    $display("%s:%d: %s == %s failed: %x != %x", `__FILE__,`__LINE__,`"v1`",`"v2`",v1,v2); \
