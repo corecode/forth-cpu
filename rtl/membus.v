@@ -26,9 +26,10 @@ module membus
 always @(*) begin
    mem_sel_write = 0;
    gpio_sel_write = 0;
-   casex (addr)
-     9'b0_xxxx_xxxx: mem_sel_write = 1;
-     9'b1_0000_000x: gpio_sel_write = 1;
+   casez (addr)
+     9'b0_????_????: mem_sel_write  = 1;
+     9'b1_0000_000?: gpio_sel_write = 1;
+     default: ;
    endcase
 end
 

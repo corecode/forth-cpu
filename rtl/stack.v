@@ -17,7 +17,7 @@ module sp_comb
 assign arg = dec ? -1 : 1;
 assign result = change ? SP + arg : SP;
 
-`ifndef NO_MANUAL_LUTS
+`ifdef NO_MANUAL_LUTS
 
    wire [saddr_width-1:0] carry;
 

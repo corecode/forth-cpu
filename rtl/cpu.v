@@ -81,7 +81,9 @@ pstack(.D(TOS),
        .*);
 
 
-assign rstack_result = rstack_ip_sel ? ip_inc : TOS;
+assign rstack_result = rstack_ip_sel
+                       ? {{width-iaddr_width{1'b0}}, ip_inc}
+                       : TOS;
 
 stack #(.saddr_width(rsaddr_width))
 rstack(.D(rstack_result),
@@ -295,7 +297,7 @@ always @(*)
 always @(*) begin
    rstack_sel = 1'b0;
    zero_arg   = 1'b0;
-   logic_op   = 1'b0;
+   logic_op   = 2'b00;
    sub        = 1'b0;
    inc        = 1'b0;
    adder_sel  = 1'b0;
@@ -357,6 +359,7 @@ always @(*) begin
         adder_sel = 1;
         inc       = 1;
      end
+     default: ;
    endcase
 end
 

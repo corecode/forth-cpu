@@ -196,7 +196,7 @@ assign TOS_is_zero = TOS == 0;
 
 // always @(posedge clk)
 //   daddr <= tos_result;
-assign daddr = TOS;
+assign daddr = TOS[daddr_width-1:0];
 assign dD = pstack_top;
 assign dwrite = mem_write;
 
