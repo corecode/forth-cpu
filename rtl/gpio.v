@@ -36,6 +36,7 @@ always @(posedge clk, posedge reset)
 for (i = 0; i < npins; i = i + 1) begin
 `ifndef INFER_PIN
    assign pins[i] = enable[i] ? pin_out[i] : 1'bz;
+   assign pin_in = pins;
 `else
    SB_IO #(.PIN_TYPE(6'b101000)) io
      (
