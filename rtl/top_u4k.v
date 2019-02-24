@@ -21,6 +21,7 @@ osc(.CLKHFEN(1),
    reg [7:0]            reset_counter;
    wire                 reset;
 
+initial reset_counter = 0;
 assign reset = ~&reset_counter;
 
 always @(posedge clk)
