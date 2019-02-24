@@ -1,9 +1,15 @@
-SRC= ../rtl/cpu.v ../rtl/alu.v ../rtl/stack.v ../rtl/ip.v lut.v ../rtl/gpio.v ../rtl/membus.v ../rtl/cpu_top.v ../rtl/spi.v ../rtl/top.v
-TB= cpu_tb top_tb
+SRC= cpu.v alu.v stack.v ip.v gpio.v membus.v cpu_top.v spi.v top.v top_u4k.v
+TB= cpu_tb top_tb top_u4k_tb
+
+LIB=${YOSYS_PATH}/ice40/cells_sim.v
+
+vpath %.v ../rtl
+
+YOSYS_PATH:= $(dir $(shell which yosys))/../share/yosys
 
 test: $(addsuffix .vcd,${TB})
 
-%.vvp: %.v ${SRC}
+%.vvp: %.v ${SRC} ${LIB}
 	iverilog -g2005-sv -Dunique= -o $@ $^
 
 .PRECIOUS: %.vvp

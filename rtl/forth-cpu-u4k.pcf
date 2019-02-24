@@ -1,0 +1,8 @@
+set_io MOSI 17
+set_io SCK 15
+set_io nCS 16
+set_io pins[0] 41
+set_io pins[1] 40
+set_io pins[2] 39
+set_io pins[3] 9
+set_io pins[4] 10

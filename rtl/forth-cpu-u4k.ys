@@ -1,0 +1,4 @@
+read_verilog top_u4k.v
+read_verilog top.v spi.v cpu_top.v gpio.v membus.v cpu.v ip.v stack.v alu.v
+synth_ice40 -top top_u4k
+write_json forth-cpu-u4k.json
