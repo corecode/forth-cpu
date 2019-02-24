@@ -51,13 +51,23 @@ mem #(.width(width),
 mem(.data_read(mem_data_read),
     .addr(addr[7:0]),
     .w_strobe(w_strobe && mem_sel_write),
-    .*);
+    /*AUTOINST*/
+    // Inputs
+    .clk                                (clk),
+    .reset                              (reset),
+    .data_write                         (data_write[width-1:0]));
 
 gpio #(.npins(npins))
 gpio(.data_read(gpio_data_read),
      .addr(addr[1:0]),
      .w_strobe(w_strobe & gpio_sel_write),
-     .*);
+     /*AUTOINST*/
+     // Inouts
+     .pins                              (pins[npins-1:0]),
+     // Inputs
+     .clk                               (clk),
+     .reset                             (reset),
+     .data_write                        (data_write[npins-1:0]));
 
 endmodule
 

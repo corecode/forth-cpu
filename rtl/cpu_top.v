@@ -39,7 +39,17 @@ always @(posedge clk)
 cpu #(.width(width),
       .iaddr_width(iaddr_width),
       .daddr_width(daddr_width))
-cpu(.*);
+cpu(/*AUTOINST*/
+    // Outputs
+    .iaddr                              (iaddr[iaddr_width-1:0]),
+    .daddr                              (daddr[daddr_width-1:0]),
+    .dwrite                             (dwrite),
+    .dD                                 (dD[width-1:0]),
+    // Inputs
+    .clk                                (clk),
+    .reset                              (reset),
+    .idata                              (idata[width-1:0]),
+    .dQ                                 (dQ[width-1:0]));
 
 membus #(.width(width),
          .npins(npins))
@@ -47,7 +57,12 @@ membus(.addr(daddr),
        .data_write(dD),
        .data_read(dQ),
        .w_strobe(dwrite),
-       .*);
+       /*AUTOINST*/
+       // Inouts
+       .pins                            (pins[npins-1:0]),
+       // Inputs
+       .clk                             (clk),
+       .reset                           (reset));
 
 
 endmodule

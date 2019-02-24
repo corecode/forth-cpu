@@ -65,11 +65,44 @@ module cpu_execute
 
 
 tos_comb #(.width(width))
-tos_comb(.*);
+tos_comb(/*AUTOINST*/
+         // Outputs
+         .tos_result                    (tos_result[width-1:0]),
+         // Inputs
+         .TOS                           (TOS[width-1:0]),
+         .rstack_top                    (rstack_top[width-1:0]),
+         .pstack_top                    (pstack_top[width-1:0]),
+         .TOS_is_zero                   (TOS_is_zero),
+         .imm                           (imm[width-1:0]),
+         .rstack_sel                    (rstack_sel),
+         .zero_arg                      (zero_arg),
+         .logic_op                      (logic_op[1:0]),
+         .sub                           (sub),
+         .inc                           (inc),
+         .adder_sel                     (adder_sel),
+         .shift_sel                     (shift_sel),
+         .zero_sel                      (zero_sel),
+         .reg_sel                       (reg_sel),
+         .imm_sel                       (imm_sel));
 
 tos_mem #(.width(width),
           .daddr_width(daddr_width))
-tos_mem(.*);
+tos_mem(/*AUTOINST*/
+        // Outputs
+        .TOS                            (TOS[width-1:0]),
+        .TOS_is_zero                    (TOS_is_zero),
+        .daddr                          (daddr[daddr_width-1:0]),
+        .dwrite                         (dwrite),
+        .dD                             (dD[width-1:0]),
+        // Inputs
+        .clk                            (clk),
+        .reset                          (reset),
+        .wait_state                     (wait_state),
+        .tos_result                     (tos_result[width-1:0]),
+        .pstack_top                     (pstack_top[width-1:0]),
+        .dQ                             (dQ[width-1:0]),
+        .mem_write                      (mem_write),
+        .mem_read                       (mem_read));
 
 
 stack #(.saddr_width(psaddr_width))
@@ -78,7 +111,11 @@ pstack(.D(TOS),
        .change(pchange),
        .update(pupdate),
        .Q(pstack_top),
-       .*);
+       /*AUTOINST*/
+       // Inputs
+       .clk                             (clk),
+       .reset                           (reset),
+       .wait_state                      (wait_state));
 
 
 assign rstack_result = rstack_ip_sel
@@ -91,13 +128,28 @@ rstack(.D(rstack_result),
        .change(rchange),
        .update(rchange),
        .Q(rstack_top),
-       .*);
+       /*AUTOINST*/
+       // Inputs
+       .clk                             (clk),
+       .reset                           (reset),
+       .wait_state                      (wait_state));
 
 
 ip_comb #(.iaddr_width(iaddr_width))
 ip_comb(.TOS(TOS[iaddr_width-1:0]),
         .rstack_top(rstack_top[iaddr_width-1:0]),
-        .*);
+        /*AUTOINST*/
+        // Outputs
+        .ip_inc                         (ip_inc[iaddr_width-1:0]),
+        .ip_result                      (ip_result[iaddr_width-1:0]),
+        // Inputs
+        .IP                             (IP[iaddr_width-1:0]),
+        .TOS_is_zero                    (TOS_is_zero),
+        .ip_imm                         (ip_imm[iaddr_width-1:0]),
+        .ip_tos_sel                     (ip_tos_sel),
+        .ip_reg_sel                     (ip_reg_sel),
+        .ip_imm_sel                     (ip_imm_sel),
+        .ip_skip                        (ip_skip));
 
 
 always @(posedge clk, posedge reset)
@@ -422,13 +474,78 @@ module cpu
 cpu_decode #(.width(width),
              .iaddr_width(iaddr_width),
              .idata_width(idata_width))
-cpu_decode(.*);
+cpu_decode(/*AUTOINST*/
+           // Outputs
+           .pdec                        (pdec),
+           .pchange                     (pchange),
+           .pupdate                     (pupdate),
+           .rdec                        (rdec),
+           .rchange                     (rchange),
+           .imm                         (imm[width-1:0]),
+           .rstack_sel                  (rstack_sel),
+           .zero_arg                    (zero_arg),
+           .logic_op                    (logic_op[1:0]),
+           .sub                         (sub),
+           .inc                         (inc),
+           .adder_sel                   (adder_sel),
+           .shift_sel                   (shift_sel),
+           .zero_sel                    (zero_sel),
+           .reg_sel                     (reg_sel),
+           .imm_sel                     (imm_sel),
+           .ip_imm                      (ip_imm[iaddr_width-1:0]),
+           .ip_imm_sel                  (ip_imm_sel),
+           .ip_skip                     (ip_skip),
+           .ip_tos_sel                  (ip_tos_sel),
+           .ip_reg_sel                  (ip_reg_sel),
+           .rstack_ip_sel               (rstack_ip_sel),
+           .mem_write                   (mem_write),
+           .mem_read                    (mem_read),
+           // Inputs
+           .idata                       (idata[idata_width-1:0]));
 
 cpu_execute #(.width(width),
               .iaddr_width(iaddr_width),
               .daddr_width(daddr_width),
               .psaddr_width(psaddr_width),
               .rsaddr_width(rsaddr_width))
-cpu_execute(.*);
+cpu_execute(/*AUTOINST*/
+            // Outputs
+            .iaddr                      (iaddr[iaddr_width-1:0]),
+            .daddr                      (daddr[daddr_width-1:0]),
+            .dwrite                     (dwrite),
+            .dD                         (dD[width-1:0]),
+            .TOS_is_zero                (TOS_is_zero),
+            // Inputs
+            .clk                        (clk),
+            .reset                      (reset),
+            .dQ                         (dQ[width-1:0]),
+            .pdec                       (pdec),
+            .pchange                    (pchange),
+            .pupdate                    (pupdate),
+            .rdec                       (rdec),
+            .rchange                    (rchange),
+            .imm                        (imm[width-1:0]),
+            .rstack_sel                 (rstack_sel),
+            .zero_arg                   (zero_arg),
+            .logic_op                   (logic_op[1:0]),
+            .sub                        (sub),
+            .inc                        (inc),
+            .adder_sel                  (adder_sel),
+            .shift_sel                  (shift_sel),
+            .zero_sel                   (zero_sel),
+            .reg_sel                    (reg_sel),
+            .imm_sel                    (imm_sel),
+            .ip_imm                     (ip_imm[iaddr_width-1:0]),
+            .ip_imm_sel                 (ip_imm_sel),
+            .ip_skip                    (ip_skip),
+            .ip_tos_sel                 (ip_tos_sel),
+            .ip_reg_sel                 (ip_reg_sel),
+            .rstack_ip_sel              (rstack_ip_sel),
+            .mem_write                  (mem_write),
+            .mem_read                   (mem_read));
 
 endmodule
+
+// Local Variables:
+// verilog-library-flags:("-v alu.v -v ip.v")
+// End:

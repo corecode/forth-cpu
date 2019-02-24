@@ -145,11 +145,52 @@ module tos_comb
 
 assign arg = zero_arg ? 0 : pstack_top;
 
-alu_reg_sel #(.width(width)) alu_reg_sel(.*);
-alu_logic #(.width(width)) alu_logic(.*);
-alu_adder #(.width(width)) alu_adder(.*);
-alu_mux #(.width(width)) alu_mux(.*);
-tos_mux #(.width(width)) tos_mux(.zero_sel(zero_sel & ~TOS_is_zero), .*);
+alu_reg_sel #(.width(width))
+alu_reg_sel(/*AUTOINST*/
+            // Outputs
+            .reg_result                 (reg_result[width-1:0]),
+            // Inputs
+            .rstack_top                 (rstack_top[width-1:0]),
+            .pstack_top                 (pstack_top[width-1:0]),
+            .rstack_sel                 (rstack_sel));
+alu_logic #(.width(width))
+alu_logic(/*AUTOINST*/
+          // Outputs
+          .logic_result                 (logic_result[width-1:0]),
+          // Inputs
+          .TOS                          (TOS[width-1:0]),
+          .arg                          (arg[width-1:0]),
+          .logic_op                     (logic_op[1:0]));
+alu_adder #(.width(width))
+alu_adder(/*AUTOINST*/
+          // Outputs
+          .adder_result                 (adder_result[width-1:0]),
+          // Inputs
+          .TOS                          (TOS[width-1:0]),
+          .arg                          (arg[width-1:0]),
+          .sub                          (sub),
+          .inc                          (inc));
+alu_mux #(.width(width))
+alu_mux(/*AUTOINST*/
+        // Outputs
+        .alu_mux_result                 (alu_mux_result[width-1:0]),
+        // Inputs
+        .logic_result                   (logic_result[width-1:0]),
+        .TOS                            (TOS[width-1:0]),
+        .shift_sel                      (shift_sel));
+tos_mux #(.width(width))
+tos_mux(.zero_sel(zero_sel & ~TOS_is_zero),
+        /*AUTOINST*/
+        // Outputs
+        .tos_result                     (tos_result[width-1:0]),
+        // Inputs
+        .reg_result                     (reg_result[width-1:0]),
+        .alu_mux_result                 (alu_mux_result[width-1:0]),
+        .adder_result                   (adder_result[width-1:0]),
+        .imm                            (imm[width-1:0]),
+        .reg_sel                        (reg_sel),
+        .adder_sel                      (adder_sel),
+        .imm_sel                        (imm_sel));
 
 endmodule
 

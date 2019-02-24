@@ -74,7 +74,14 @@ module stack
    reg [saddr_width-1:0] SP;
    wire [saddr_width-1:0] SP_result;
 
-sp_comb #(.saddr_width(saddr_width)) sp_comb(.*);
+sp_comb #(.saddr_width(saddr_width))
+sp_comb(/*AUTOINST*/
+        // Outputs
+        .SP_result                      (SP_result[saddr_width-1:0]),
+        // Inputs
+        .SP                             (SP[saddr_width-1:0]),
+        .dec                            (dec),
+        .change                         (change));
 
 always @(posedge clk)
   if (reset)
