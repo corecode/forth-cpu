@@ -161,12 +161,12 @@ always @(posedge clk, posedge reset)
 
 always @(posedge clk, posedge reset)
   if (reset)
-    IP <= -1;
+    IP <= 0;
   else
     if (!wait_state)
       IP <= ip_result;
 
-assign iaddr = ip_result;
+assign iaddr = reset ? IP : ip_result;
 
 endmodule
 
