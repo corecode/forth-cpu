@@ -47,15 +47,16 @@ spi spi(.data_ready(i_write),
         .clk                            (clk),
         .reset                          (reset));
 
-cpu_top cpu_top(.reset(reset | chip_selected),
-                /*AUTOINST*/
-                // Inouts
-                .pins                   (pins[npins-1:0]),
-                // Inputs
-                .clk                    (clk),
-                .iaddr_write            (iaddr_write[iaddr_width-1:0]),
-                .idata_write            (idata_write[width-1:0]),
-                .i_write                (i_write));
+cpu_top #(.npins(npins))
+cpu_top(.reset(reset | chip_selected),
+        /*AUTOINST*/
+        // Inouts
+        .pins                   (pins[npins-1:0]),
+        // Inputs
+        .clk                    (clk),
+        .iaddr_write            (iaddr_write[iaddr_width-1:0]),
+        .idata_write            (idata_write[width-1:0]),
+        .i_write                (i_write));
 
 
 endmodule

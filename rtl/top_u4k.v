@@ -1,14 +1,15 @@
 `default_nettype none
 
 module top_u4k
-  (
+  #(parameter
+    npins = 5
+    )
+(
    input             MOSI,
    input             SCK,
    input             nCS,
    inout [npins-1:0] pins
 );
-
-localparam npins = 5;
 
 
    wire                 clk;
